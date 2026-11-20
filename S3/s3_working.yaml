@@ -1,0 +1,44 @@
+# Description of what this change includes
+# Revision number
+# Date
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Public static website on S3 over HTTP. Add CloudFront in front of it for HTTPS.
+Resources:
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+  BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Id: MyPolicy
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref S3Bucket
+                - /*
+Outputs:
+  WebsiteURL:
+    Description: HTTP address of the S3 website endpoint. This endpoint does not serve HTTPS.
+    Value: !GetAtt S3Bucket.WebsiteURL
+  BucketName:
+    Description: Bucket that holds the website files
+    Value: !Ref S3Bucket
